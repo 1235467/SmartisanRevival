@@ -1,0 +1,29 @@
+# 本机 SDK 拷贝、构建产物、会话缓存
+AndroidSdk/
+.marionette/
+.zcode/
+.gradle/
+.idea/
+*.iml
+local.properties
+captures/
+*.log
+Thumbs.db
+.DS_Store
+
+# Android 模块
+**/build/
+**/.cxx/
+
+# 二进制安装包（解包后的 res 仍提交）
+*.apk
+*.ap_
+*.aab
+
+# 上游 git clone，各自带 .git，不嵌进本仓库
+references/repos/
+
+# 系统 / 解包残留
+*.dex
+*.class
+.DS_Store

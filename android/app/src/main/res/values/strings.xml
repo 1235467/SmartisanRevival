@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="acc_desc">SmartisanRevival 大爆炸：拇指按住文字后炸开词块。不监听选词、不抢按钮长按。日志只留本机。</string>
+    <string name="app_title">大爆炸</string>
+</resources>

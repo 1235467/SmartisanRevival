@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="sheet_corner_radius">16dp</dimen>
+    <dimen name="chip_text_size">15dp</dimen>
+    <dimen name="word_min_width">33dp</dimen>
+    <dimen name="word_base_width">18dp</dimen>
+    <dimen name="punc_min_width">21dp</dimen>
+    <dimen name="punc_base_width">8dp</dimen>
+</resources>
