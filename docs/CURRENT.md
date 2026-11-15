@@ -101,9 +101,27 @@ adb shell settings get secure enabled_accessibility_services
 
 **Shizuku 服务端重启后不会自动运行**，这是按压失灵最常见的原因。详见上一节。
 
+## 炸图片（框选流，已跑通）
+
+树里没字的按压不再整屏盲 OCR（实测按在图片上挑不到行，只会炸空面板），改为复刻
+OS 8 TextBoom 的 `crop_image_ocr_view`：
+
+- `ScreenCapture.take`（无障碍 `takeScreenshot`）冻结全屏 → `CropOverlayController`
+  弹 `TYPE_ACCESSIBILITY_OVERLAY` 全屏层（窗口参数同一步侧栏 showPanel）
+- `CropSelectView`：截屏做底、选区外压暗、蓝框 + 原版四角角标（从 TextBoom APK 提取）；
+  标题栏 取消 | 框选需要识别的区域 | 识别文字；提示语原版「此区域不支持文字炸开…」
+- 初始框 = `NodeTextExtractor.hitBoundsAtPoint` 命中的最小无字节点（图片就是它的框），
+  接近全屏或没命中退回按压点居中 70%×45%
+- 「识别文字」→ 选区裁剪 → `ScreenOcr.recognize`（本地 RapidOCR）→ 行坐标映射回屏幕 →
+  `OcrTextExtractor.buildBangResult` → 炸面板；空结果 toast「未识别出文字」，界面留下可重划
+- 实测（21 Pro）：手写便签图、日历数字均正确识别并分词；空选区/取消路径正常
+
+**坑**：无障碍服务被重绑（开关变动、uiautomator dump 接管）会重建实例并丢弃旧窗口，
+必须 onDestroy 里收干净覆盖层，否则残留孤儿窗口 + 状态卡死。另外取树在备忘录
+WebView / 后台 Chrome 窗口上有挂起风险（老问题，与框选无关）。
+
 ## 明确还没做的
 
-- 截图 OCR：无障碍没字时 `takeScreenshot` + RapidOCR 再炸（刚接上，模型首次加载可能要几秒）
 - C4 词典独立词条列表（当前词典走搜索浮卡里的有道页）
 - 上拉分段炸、双指炸
 - Magisk/LSPosed framework 挂钩（真正「按文字就炸、替换系统长按」只有这条路）

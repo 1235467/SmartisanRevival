@@ -2,6 +2,7 @@ package com.smartisanrevival.bang.ocr
 
 import android.accessibilityservice.AccessibilityService
 import android.graphics.Rect
+import android.os.SystemClock
 import android.util.Log
 import com.smartisanrevival.bang.model.BangResult
 import com.smartisanrevival.bang.model.Granularity
@@ -9,38 +10,30 @@ import com.smartisanrevival.bang.model.Source
 import com.smartisanrevival.bang.model.WordBlock
 import com.smartisanrevival.bang.text.WordSegmenter
 
+/**
+ * OCR 行 → 词块 + BangResult。
+ * 原来是「整屏盲 OCR 挑按压点附近的行」，实测按在图片上挑不到东西，只会炸出空面板。
+ * 现在的取字路径是原版炸图片的框选流（见 CropSelectView）：用户框好区域，
+ * 服务把选区内的行映射回屏幕坐标后交给 buildBangResult。
+ */
 object OcrTextExtractor {
     private const val TAG = "BangOcr"
 
-    fun extract(service: AccessibilityService, x: Int, y: Int): BangResult? {
-        val t0 = System.currentTimeMillis()
-        val shot = ScreenCapture.take(service)
-        if (shot == null) {
-            Log.i(TAG, "ocr no screenshot")
-            return null
-        }
-        val lines = try {
-            ScreenOcr.recognize(service, shot)
-        } finally {
-            shot.recycle()
-        }
+    /**
+     * @param lines 已在屏幕坐标系里的行（调用方负责从选区位图空间映射回来）
+     */
+    fun buildBangResult(
+        lines: List<ScreenOcr.Line>,
+        touchX: Int,
+        touchY: Int,
+        pkg: String,
+        t0: Long
+    ): BangResult? {
         if (lines.isEmpty()) return null
-
-        val slop = (service.resources.displayMetrics.density * 96).toInt()
-        val near = lines.filter { boxNear(it, x, y, slop) }.ifEmpty {
-            val closest = lines.minByOrNull { dist(it, x, y) }
-            if (closest != null) listOf(closest) else lines
-        }
-        val picked = if (near.size == 1) {
-            val band = near.first()
-            lines.filter { kotlin.math.abs(it.top - band.top) < ((band.bottom - band.top) * 1.6f).toInt().coerceAtLeast(40) }
-                .sortedBy { it.left }
-        } else near.sortedWith(compareBy({ it.top }, { it.left }))
-
         val blocks = ArrayList<WordBlock>()
         val sb = StringBuilder()
         var id = 0
-        for (line in picked.sortedWith(compareBy({ it.top }, { it.left }))) {
+        for (line in lines.sortedWith(compareBy({ it.top }, { it.left }))) {
             if (sb.isNotEmpty()) sb.append('\n')
             val tokens = WordSegmenter.tokenize(line.text)
             val total = tokens.sumOf { it.text.length }.coerceAtLeast(1)
@@ -68,24 +61,19 @@ object OcrTextExtractor {
             sb.append(line.text)
         }
         if (blocks.isEmpty()) return null
-        val pkg = foregroundPkg(service)
-        Log.i(TAG, "ocr bang lines=${picked.size} blocks=${blocks.size} ${System.currentTimeMillis() - t0}ms")
+        // t0 用 uptime 时钟（调用方 startCropOcr 传的是 SystemClock.uptimeMillis()）
+        Log.i(TAG, "ocr bang lines=${lines.size} blocks=${blocks.size} ${SystemClock.uptimeMillis() - t0}ms")
         return BangResult(
             blocks = blocks,
             sourceWindowPkg = pkg,
-            extractMs = System.currentTimeMillis() - t0,
-            touchX = x,
-            touchY = y,
+            extractMs = SystemClock.uptimeMillis() - t0,
+            touchX = touchX,
+            touchY = touchY,
             sourceText = sb.toString()
         )
     }
 
-    private fun boxNear(line: ScreenOcr.Line, x: Int, y: Int, slop: Int): Boolean {
-        return x >= line.left - slop && x <= line.right + slop &&
-            y >= line.top - slop && y <= line.bottom + slop
-    }
-
-    private fun foregroundPkg(service: AccessibilityService): String {
+    fun foregroundPkg(service: AccessibilityService): String {
         val self = service.packageName
         try {
             val focused = service.windows?.firstOrNull { w ->
@@ -101,11 +89,5 @@ object OcrTextExtractor {
         }
         val active = service.rootInActiveWindow?.packageName?.toString().orEmpty()
         return if (active == self) "ocr" else active
-    }
-
-    private fun dist(line: ScreenOcr.Line, x: Int, y: Int): Int {
-        val cx = (line.left + line.right) / 2
-        val cy = (line.top + line.bottom) / 2
-        return kotlin.math.abs(cx - x) + kotlin.math.abs(cy - y)
     }
 }

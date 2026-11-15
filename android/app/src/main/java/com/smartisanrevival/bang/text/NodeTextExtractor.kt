@@ -81,6 +81,33 @@ object NodeTextExtractor {
     }
 
     /**
+     * 按压点命中的最小无字节点边界。原版炸图片时默认框住整张图——
+     * 无障碍树读不到字，但按住的 ImageView / 容器有自己的 bounds，拿它当初始框选。
+     * 只走按压点所在窗口，复用 findTextNodeAt 的那套遍历。
+     */
+    fun hitBoundsAtPoint(service: AccessibilityService, x: Int, y: Int): Rect? {
+        var best: Rect? = null
+        var bestArea = Int.MAX_VALUE
+        val slop = (service.resources.displayMetrics.density * 8).toInt()
+        for (root in appWindowRoots(service, x to y)) {
+            val pkg = root.packageName?.toString() ?: continue
+            if (pkg == "com.smartisanrevival.bang") continue
+            walkContaining(root, x, y, slop) { node ->
+                if (isChromeControl(node)) return@walkContaining
+                val b = Rect()
+                node.getBoundsInScreen(b)
+                if (b.isEmpty || !b.contains(x, y)) return@walkContaining
+                val area = b.width() * b.height()
+                if (area < bestArea) {
+                    bestArea = area
+                    best = Rect(b)
+                }
+            }
+        }
+        return best
+    }
+
+    /**
      * 按行分组，每组约 SEGMENT_CHARS 行。返回 (段落文本, 在原文里的字符区间)。
      */
     private fun splitByScreen(text: String): List<Pair<String, IntRange>> {
