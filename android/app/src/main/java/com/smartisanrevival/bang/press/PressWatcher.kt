@@ -55,7 +55,7 @@ class PressWatcher(
          * 原版「触发面积」中间档。面积越小越容易炸；32/255 能挡指尖轻点，
          * 拇指按住文字过得去。本机没有 ABS_MT_PRESSURE。
          */
-        private const val MIN_TOUCH_MAJOR = 32
+        private const val FALLBACK_MIN_MAJOR = 120
 
         private const val FRAME_BYTES = 24
     }
@@ -89,8 +89,9 @@ class PressWatcher(
     private var lastRawX = 0
     private var lastRawY = 0
     private var anchorWaits = 0
-    private var peakMajor = 0
-    private var minTouchMajor = MIN_TOUCH_MAJOR
+    @Volatile private var peakMajor = 0
+    @Volatile private var minTouchMajor = FALLBACK_MIN_MAJOR
+    @Volatile private var calibrating = false
     private val slotX = IntArray(10) { -1 }
     private val slotY = IntArray(10) { -1 }
     private val slotMajor = IntArray(10)
@@ -99,6 +100,17 @@ class PressWatcher(
 
     /** 正在从触摸设备读事件。绑定成功但线程没起来时，这个是 false。 */
     fun isReading(): Boolean = reading
+
+    fun setMinTouchMajor(v: Int) {
+        minTouchMajor = v.coerceIn(0, 255)
+        Log.i(TAG, "min touch major=$minTouchMajor")
+    }
+
+    fun setCalibrating(v: Boolean) {
+        calibrating = v
+    }
+
+    fun peekMajor(): Int = peakMajor
 
     fun start(context: Context) {
         if (running.getAndSet(true)) return
@@ -278,6 +290,7 @@ class PressWatcher(
             Log.i(TAG, "not anchored, skip")
             return
         }
+        if (calibrating) return
         if (moved) {
             Log.i(TAG, "hold skipped, finger scrolling")
             return
@@ -301,6 +314,7 @@ class PressWatcher(
 
     /** 菜单弹出前先把手指下的字记下。坐标用锚定后的位置。 */
     private fun previewIfStable() {
+        if (calibrating) return
         if (!running.get() || !pressed || fired || moved) return
         if (!anchored) {
             main.postDelayed({ previewIfStable() }, 40)

@@ -14,14 +14,26 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "1.0-thumbpress"
+        ndk {
+            abiFilters += listOf("arm64-v8a")
+        }
     }
 
     buildFeatures {
         aidl = true
     }
+    signingConfigs {
+        create("release") {
+            storeFile = file("../keystore/bang-release.jks")
+            storePassword = "bang-revival-2026"
+            keyAlias = "bang"
+            keyPassword = "bang-revival-2026"
+        }
+    }
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {
@@ -31,10 +43,17 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
 }
 
 dependencies {
+    implementation("androidx.core:core:1.13.1") // FileProvider：内置 Shizuku 安装
     implementation("dev.rikka.shizuku:api:13.1.5")
     implementation("dev.rikka.shizuku:provider:13.1.5")
     implementation("com.huaban:jieba-analysis:1.0.2")
+    implementation("io.github.hzkitty:rapidocr4j-android:1.0.0")
 }

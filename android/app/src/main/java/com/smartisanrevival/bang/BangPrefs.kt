@@ -8,6 +8,10 @@ object BangPrefs {
     const val KEY_SEARCH_WEB = "search_web"
     const val KEY_SEARCH_DICT = "search_dict"
     const val KEY_SEARCH_WIKI = "search_wiki"
+    const val KEY_THUMB_MAJOR = "thumb_major"
+
+    /** 未校准前偏严，挡指尖。一步同屏 TOUCH_MAJOR 满量 255，轻点常在 40–90。 */
+    const val DEFAULT_MIN_MAJOR = 120
 
     fun pressEnabled(ctx: Context): Boolean =
         ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE).getBoolean(KEY_PRESS, false)
@@ -21,5 +25,19 @@ object BangPrefs {
 
     fun setSearchEngine(ctx: Context, key: String, id: String) {
         ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE).edit().putString(key, id).apply()
+    }
+
+    fun thumbMajor(ctx: Context): Int =
+        ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE).getInt(KEY_THUMB_MAJOR, 0)
+
+    fun setThumbMajor(ctx: Context, major: Int) {
+        ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE).edit().putInt(KEY_THUMB_MAJOR, major).apply()
+    }
+
+    /** 运行时门槛：校准值的 78%。没校准用偏严的默认。 */
+    fun minTouchMajor(ctx: Context): Int {
+        val thumb = thumbMajor(ctx)
+        if (thumb <= 0) return DEFAULT_MIN_MAJOR
+        return (thumb * 0.78f).toInt().coerceIn(48, 240)
     }
 }

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 内置 Shizuku 安装包对外共享用 -->
+<paths>
+    <cache-path name="install" path="install/" />
+</paths>

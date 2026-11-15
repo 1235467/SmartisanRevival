@@ -2,6 +2,7 @@ package com.smartisanrevival.bang.service
 
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.AccessibilityServiceInfo
+import android.annotation.SuppressLint
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
@@ -58,6 +59,11 @@ class BangAccessibilityService : AccessibilityService() {
             val t0 = SystemClock.uptimeMillis()
             WordSegmenter.tokenize("预热分词")
             Log.i(TAG, "segmenter warmup ${SystemClock.uptimeMillis() - t0}ms")
+            try {
+                com.smartisanrevival.bang.ocr.ScreenOcr.warmup(this)
+            } catch (t: Throwable) {
+                Log.i(TAG, "ocr warmup skipped: ${t.message}")
+            }
         }
         if (BangPrefs.pressEnabled(this)) startPressWatcherIfReady()
         main.removeCallbacks(watchToken)
@@ -130,7 +136,8 @@ class BangAccessibilityService : AccessibilityService() {
                     pressBang(x, y, gesture)
                 }
             ).also {
-                Log.i(TAG, "press watcher starting timeout=${timeout}ms")
+                it.setMinTouchMajor(BangPrefs.minTouchMajor(this))
+                Log.i(TAG, "press watcher starting timeout=${timeout}ms minMajor=${BangPrefs.minTouchMajor(this)}")
                 it.start(this)
             }
         } catch (e: Exception) {
@@ -142,6 +149,7 @@ class BangAccessibilityService : AccessibilityService() {
     private val retryToken = Runnable { startPressWatcherIfReady() }
 
     /** 系统只从 XML 读这个标记，公开接口写不了。调试包可以反射写上，重装后立刻生效。 */
+    @SuppressLint("BlockedPrivateApi") // XML 已声明 isAccessibilityTool，反射失败会被捕获，属兜底逻辑
     private fun markAsAccessibilityTool(info: AccessibilityServiceInfo) {
         try {
             val field = AccessibilityServiceInfo::class.java.getDeclaredField("mIsAccessibilityTool")
@@ -157,6 +165,16 @@ class BangAccessibilityService : AccessibilityService() {
         retryCount = 0
         pressWatcher?.stop()
         pressWatcher = null
+    }
+
+    fun setCalibrating(v: Boolean) {
+        pressWatcher?.setCalibrating(v)
+    }
+
+    fun peekMajor(): Int = pressWatcher?.peekMajor() ?: 0
+
+    fun applyThumbThreshold() {
+        pressWatcher?.setMinTouchMajor(BangPrefs.minTouchMajor(this))
     }
 
     /**
@@ -202,13 +220,21 @@ class BangAccessibilityService : AccessibilityService() {
                 null
             }
             if (cached != null) Log.i(TAG, "use preview g=$gesture")
-            if (result == null) {
+            val resolved = result ?: com.smartisanrevival.bang.ocr.OcrTextExtractor.extract(this, x, y)
+            if (resolved == null) {
                 Log.i(TAG, "press on non-text ($x,$y), silent ${SystemClock.uptimeMillis() - t0}ms")
                 return@execute
             }
-            Log.i(TAG, "bang! pkg=${result.sourceWindowPkg} blocks=${result.blocks.size} ${result.extractMs}ms")
-            Log.i(TAG, "first: " + result.blocks.take(12).joinToString("|") { it.text })
-            main.post { bang(result) }
+            val fromOcr = resolved.blocks.any { it.source == com.smartisanrevival.bang.model.Source.OCR }
+            // 一步热区/本 App 窗口会变成 rootInActiveWindow，OCR 截到的却是底下的微信。
+            // 节点树命中自己才跳过；OCR 结果照常炸。
+            if (!fromOcr && resolved.sourceWindowPkg == packageName) {
+                Log.i(TAG, "skip bang on self")
+                return@execute
+            }
+            Log.i(TAG, "bang! pkg=${resolved.sourceWindowPkg} blocks=${resolved.blocks.size} ${resolved.extractMs}ms")
+            Log.i(TAG, "first: " + resolved.blocks.take(12).joinToString("|") { it.text })
+            main.post { bang(resolved) }
         }
     }
 

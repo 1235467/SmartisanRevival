@@ -27,3 +27,10 @@ references/repos/
 *.dex
 *.class
 .DS_Store
+
+# 发布产物与签名密钥（keystore 本地保存，另行备份）
+dist/
+android/keystore/
+
+# 例外：内置 Shizuku 安装包是构建输入，必须入库
+!android/app/src/main/assets/shizuku.apk

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 仅 debug 构建包含：adb 手动触发用的调试接收器。release 构建不含本文件。 -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 仅调试用：adb 手动触发炸词 -->
+    <receiver
+        android:name="com.smartisanrevival.bang.DebugTriggerReceiver"
+        android:exported="true" />
+
+    <!-- 仅调试用：adb 手动开关一步侧栏 -->
+    <receiver android:name="com.smartisanrevival.onestep.OneStepDebugReceiver"
+        android:exported="true">
+        <intent-filter>
+            <action android:name="com.smartisanrevival.onestep.DEBUG_ENABLE" />
+            <action android:name="com.smartisanrevival.onestep.DEBUG_DISABLE" />
+            <action android:name="com.smartisanrevival.onestep.DEBUG_TOGGLE" />
+            <action android:name="com.smartisanrevival.onestep.DEBUG_SHOW" />
+            <action android:name="com.smartisanrevival.onestep.DEBUG_HIDE" />
+            <action android:name="com.smartisanrevival.onestep.DEBUG_FLASH_HOTZONE" />
+            <action android:name="com.smartisanrevival.onestep.DEBUG_SPLIT" />
+        </intent-filter>
+    </receiver>
+</manifest>

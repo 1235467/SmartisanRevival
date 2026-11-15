@@ -466,7 +466,8 @@ object NodeTextExtractor {
             if (point != null) {
                 val b = Rect()
                 w.getBoundsInScreen(b)
-                if (!b.contains(point.first, point.second)) continue
+                // 微信在这台机器上窗口 bounds 经常是 0×0，仍要进去走子树 / 交给 OCR。
+                if (!b.isEmpty && !b.contains(point.first, point.second)) continue
             } else if (!w.isActive) {
                 continue
             }

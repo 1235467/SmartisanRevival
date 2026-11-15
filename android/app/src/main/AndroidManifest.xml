@@ -1,9 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- 内置 Shizuku 安装包，一键装出来 -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="moe.shizuku.manager.permission.API_V23" />
+    <!-- 一步：侧栏要列出全部启动器应用（侧载应用不走商店审核） -->
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+    <!-- 一步：照片面板（Android 13+ 细分媒体权限；32 及以下走 legacy） -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
 
     <queries>
         <package android:name="moe.shizuku.privileged.api" />
@@ -11,14 +20,21 @@
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="https" />
         </intent>
+        <!-- 一步侧栏要枚举全部启动器应用 -->
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
     </queries>
 
     <application
         android:label="@string/app_title"
         android:icon="@android:drawable/ic_menu_send"
+        android:roundIcon="@android:drawable/ic_menu_send"
         android:allowBackup="false"
         android:usesCleartextTraffic="true"
-        android:theme="@android:style/Theme.Material.Light.DarkActionBar">
+        android:theme="@android:style/Theme.Material.Light.DarkActionBar"
+        tools:replace="android:theme,android:allowBackup,android:icon,android:label,android:roundIcon">
 
         <activity
             android:name=".MainActivity"
@@ -53,10 +69,58 @@
             </intent-filter>
         </service>
 
-        <!-- 仅调试用：adb 手动触发炸词。release 构建时移除（见 build.gradle TODO） -->
-        <receiver
-            android:name=".DebugTriggerReceiver"
-            android:exported="true" />
+        <!-- ===== 一步 OneStep ===== -->
+        <service
+            android:name="com.smartisanrevival.onestep.service.OneStepAccessibilityService"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+            android:exported="false"
+            android:label="一步引擎">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/onestep_accessibility_config" />
+        </service>
+
+        <service
+            android:name="com.smartisanrevival.onestep.OneStepTileService"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
+            android:exported="true"
+            android:icon="@drawable/onestep_topbar_clipboard"
+            android:label="一步">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <!-- 一步：分享/选字收纳入口 -->
+        <activity
+            android:name="com.smartisanrevival.onestep.send.OneStepSendActivity"
+            android:excludeFromRecents="true"
+            android:theme="@android:style/Theme.NoDisplay"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.PROCESS_TEXT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+
+        <!-- 内置 shizuku.apk 走系统安装器用 -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
 
         <provider
             android:name="rikka.shizuku.ShizukuProvider"

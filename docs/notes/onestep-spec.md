@@ -125,6 +125,40 @@ sharelist（分享目标列表）。顶栏三按钮：照片 / 文件 / 剪贴�
 | 拇指下拉触发面积（5 档） | ✅ 同 5 档 |
 | 讲解视频链接 | — |
 
+## 验收红线（2026-11-15 触摸事故后新增）
+
+**全屏悬浮窗用完即删，绝不允许残留。** 事故：内容面板 dismiss 只做了动画，真正摘窗写成了
+`View.parent.removeView`（对窗口无效），每次开关面板泄漏一个透明全屏窗——叠到 9 层时
+整屏触摸全部被吃 + 合成卡顿（用户手机一度完全无法操作）。
+
+回归测试（装机后必跑，dedup 计数窗口 hash）：
+```
+侧栏开=3（标题条+侧栏+热区）→ 面板开=4 → 面板关=3 → 侧栏收=1（仅热区）
+```
+且侧栏收起后，自查窗口的 touchableRegion 不得出现全屏矩形。恢复手段：`am force-stop com.smartisanrevival.bang`。
+
+教训：视觉验证（截图）看不出透明触摸层，**悬浮窗功能必须同时验证触摸穿透**。
+
+## 活窗口收缩 · 无 root 判决（2026-11-15 实测）
+
+用户指正：原版 OneStep 1.0 是「整个系统画面收缩到左下角」的**活窗口**（可操作）。在魅族 21 Pro
+（Android 16 / Flyme，无 root）上四条路全部实测封死：
+
+| 路线 | 结果 |
+|------|------|
+| `am stack resize <taskId> <bounds>` | Android 16 已删除该子命令 |
+| `am start --windowingMode 5`（重定向已运行任务） | 无视，intent 直接投给现有全屏实例 |
+| `settings put global enable_freeform_support 1` + freeform 启动 | Flyme 无视，仍全屏（已恢复该设置） |
+| `performGlobalAction(GLOBAL_ACTION_TOGGLE_SPLIT_SCREEN)` | Flyme 无视，画面无变化 |
+
+结论：真·活窗口收缩只有 **root / LSPosed 挂钩 framework** 这一条路（可行性的 D 级路线）。
+无 root 下的形态取舍：OS 8 式覆盖侧栏（当前实现）为 v1 主线；静态截图卡片方案已被用户否决。
+相关代码留位：`ShrinkCardView.kt`（未接线）、`OneStepAccessibilityService.takeScreenShotCompat()`。
+
+**悬浮窗焦点铁律**：所有窗口必须 FLAG_NOT_FOCUSABLE。事故：常驻热区窗无此标志 → 抢走
+`mCurrentFocus`/`imeInputTarget` → 用户键盘完全失灵。大爆炸面板窗（bang 侧）同样缺此标志，
+测试时也会抢焦点，建议 bang 侧补上。
+
 ## 归档索引
 
 - R2 截屏：`references/recordings/r2_*.png`（wake/home/触发/布局镜像/设置页全滚动）
