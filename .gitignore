@@ -23,6 +23,10 @@ Thumbs.db
 # 上游 git clone，各自带 .git，不嵌进本仓库
 references/repos/
 
+# 原版 APK 解包素材与真机录屏截图：仅本地研究用，不随仓库分发
+references/smartisan-apk/
+references/recordings/
+
 # 系统 / 解包残留
 *.dex
 *.class

@@ -1,3 +1,4 @@
+> 注：本笔记引用的 `references/recordings/`、`references/smartisan-apk/` 素材仅存本地，不随公开仓库分发。
 # 一步 OneStep · 复刻规格（R2 实测 + 官方源码对表）
 
 > 2026-11-15 第 0 步产出。来源：坚果 R2（Smartisan OS / Android 11，aries）实机操作 + 截屏归档；

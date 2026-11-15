@@ -1,3 +1,4 @@
+> 注：本笔记引用的 `references/smartisan-apk/`、`references/recordings/` 素材（原版 APK 解包与真机录屏）仅存本地，不随公开仓库分发。
 # 大爆炸官方实现笔记（读源码 + R2 实机解包）
 
 > 来源：`references/repos/packages_apps_BigBang`（官方 Apache-2.0）+

@@ -1,7 +1,7 @@
 # 魅族 21 Pro (M2481) Root / BL 解锁研究
 
 > 2026-11-15 · 目的：为一步（窗口收缩、framework 注入）和大爆炸解锁 root 级能力。
-> 本机：Meizu 21 Pro，adb 序列号 481QHFFN229CW，内核 `6.1.25-android14-11-maybe-dirty`（GhostLock 官方支持串）。
+> 本机：Meizu 21 Pro，adb 序列号 <你的设备序列号>，内核 `6.1.25-android14-11-maybe-dirty`（GhostLock 官方支持串）。
 
 ## 结论总览
 

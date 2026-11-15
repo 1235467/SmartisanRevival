@@ -7,7 +7,7 @@
 首个体验版已发 GitHub Release：[`v1.0-thumbpress`](https://github.com/nt-cubic/SmartisanRevival/releases/tag/v1.0-thumbpress)。
 **Shizuku 已内置在 APK 里**，接收人全程不需要联网。
 
-私有仓库。目标机：USB adb `481QHFFN229CW`。参考机：坚果 R2（Smartisan OS 8）。
+目标机：魅族 21 Pro。参考机：坚果 R2（Smartisan OS 8）。
 
 ---
 
@@ -23,7 +23,7 @@
 - **复制**：原版 24 帧开口动画，字吸进去，按钮合回圆钮，面板不关
 - **搜索 / 词典**：独立浮卡「网络搜索结果」，底栏换百度 / 谷歌 / 必应 / 有道等
 - **炸图片 · 框选识别**（复刻 OS 8 炸图片）：按在图片等没有字的区域 → 冻结截屏 + 蓝色框选界面
-  （取消 | 框选需要识别的区域 | 识别文字，四角角标取自原版 APK），划选确认后本地 RapidOCR
+  （取消 | 框选需要识别的区域 | 识别文字），划选确认后本地 RapidOCR
   识别选区，结果炸成词块；识别不到提示「未识别出文字」并留在原地可重划
 
 按在按钮、空白处不炸，系统自己的长按菜单照常。
@@ -81,11 +81,11 @@ dist/               发布产物（不进 git）
 probe/              第 0 期体检 APK 与转储
 docs/               施工文档；CURRENT.md 是当前边界
 references/
-  analysis/         坚果 R2 录屏逐帧
-  recordings/       真机截图、bang_demo.mp4
-  smartisan-apk/    OS 8 TextBoom 解包素材
-                    （官方源码 clone 在 references/repos/，不进 git）
+  analysis/         坚果 R2 录屏逐帧（含原版界面截图，仅本地研究，不进 git）
 ```
+
+> 原 SmartisanOS APK 的解包素材、真机录屏与截图不随仓库分发，本地另行保存。
+> Smartisan OS 相关商标权益归其权利人所有；本项目与其无隶属关系。
 
 ---
 
@@ -94,21 +94,21 @@ references/
 Gradle 必须在 `android/` 里跑，仓库根目录没有 `settings.gradle`。
 
 ```
-JDK    D:\tools\jdk-17
-Gradle D:\tools\gradle\gradle-8.9
-SDK    D:\Android\Sdk（local.properties）
-ADB    D:\Project\SmartisanRevival\AndroidSdk\platform-tools\adb.exe
+JDK    D:\Dev\Toolchains\jdk17
+Gradle D:\Dev\Toolchains\gradle\gradle-8.9
+SDK    D:\Dev\SDKs\Android\Sdk（local.properties）
+ADB    D:\Dev\SDKs\Android\Sdk\platform-tools\adb.exe
 ```
 
 ```bat
 cd /d D:\Project\SmartisanRevival\android
-D:\tools\gradle\gradle-8.9\bin\gradle.bat assembleDebug --console=plain
+D:\Dev\Toolchains\gradle\gradle-8.9\bin\gradle.bat assembleDebug --console=plain
 ```
 
 APK：`android/app/build/outputs/apk/debug/app-debug.apk`
 
 ```bat
-adb -s 481QHFFN229CW install -r android\app\build\outputs\apk\debug\app-debug.apk
+adb install -r android\app\build\outputs\apk\debug\app-debug.apk
 ```
 
 重装后 Flyme 会关掉无障碍，要到 **设置 → 辅助功能 → 无障碍 → 大爆炸引擎** 再打开一次。
@@ -116,7 +116,7 @@ adb -s 481QHFFN229CW install -r android\app\build\outputs\apk\debug\app-debug.ap
 **发 release 版**（签名密钥在 `android/keystore/bang-release.jks`，别名 `bang`，密码见私档；密钥不随仓库分发）：
 
 ```bat
-D:\tools\gradle\gradle-8.9\bin\gradle.bat assembleRelease --console=plain
+D:\Dev\Toolchains\gradle\gradle-8.9\bin\gradle.bat assembleRelease --console=plain
 ```
 
 APK：`android/app/build/outputs/apk/release/app-release.apk`，发版前复制到 `dist/` 并走 `gh release create`。
@@ -135,13 +135,13 @@ APK：`android/app/build/outputs/apk/release/app-release.apk`，发版前复制�
 调试广播（**仅 debug 构建**，release 已移除接收器；不经过手指）：
 
 ```bat
-adb -s 481QHFFN229CW shell am broadcast -a com.smartisanrevival.bang.TRIGGER --ei x 684 --ei y 1100 -n com.smartisanrevival.bang/.DebugTriggerReceiver
+adb shell am broadcast -a com.smartisanrevival.bang.TRIGGER --ei x 684 --ei y 1100 -n com.smartisanrevival.bang/.DebugTriggerReceiver
 ```
 
 一步侧栏调试（同样仅 debug）：
 
 ```bat
-adb -s 481QHFFN229CW shell am broadcast -a com.smartisanrevival.onestep.DEBUG_TOGGLE
+adb shell am broadcast -a com.smartisanrevival.onestep.DEBUG_TOGGLE
 ```
 
 日志：`adb logcat -s Bang:I BangPress:I OneStep:I`  
@@ -176,3 +176,11 @@ QQ / 微信把气泡标成敏感节点，服务必须声明为辅助功能工具
 | `docs/notes/bigbang-algorithm.md` | 官方源码 + R2 APK 的算法摘录 |
 
 原版大爆炸 App 只是显示端。触发和取字在锤子 framework 里，第三方做不到那一层，所以用 Shizuku 读 `/dev/input` 补上。
+
+---
+
+## License
+
+代码以 [MIT](LICENSE) 发布。引用的第三方库见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+
+Smartisan、锤子及相关名称与商标归其权利人所有，本项目是非官方复刻，与 Smartisan/字节跳动无任何隶属或背书关系。

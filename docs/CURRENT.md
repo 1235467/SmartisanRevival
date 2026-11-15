@@ -60,7 +60,7 @@ bounds 却只覆盖屏幕上那 2313px）。所以：
 
 APK：`android/app/build/outputs/apk/debug/app-debug.apk`（versionName `1.0-thumbpress`）
 
-真机已验证（Meizu 21 Pro，adb 序列号 481QHFFN229CW）：
+真机已验证（Meizu 21 Pro，adb 序列号 <你的设备序列号>）：
 
 - Shizuku `shizuku_server` 运行、App 授权成功
 - 无障碍「大爆炸引擎」已绑定

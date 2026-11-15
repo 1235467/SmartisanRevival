@@ -1,3 +1,4 @@
+> 注：本笔记引用的 `references/recordings/`、`references/smartisan-apk/` 素材仅存本地，不随公开仓库分发。
 # 闪念胶囊 IdeaPills · 复刻规格（R2 实机取证 + 原版 APK 资源对表 + 社区实现调查）
 
 > 2026-11-15 第 0 步产出。来源：坚果 R2（Smartisan OS 8 / Android 11）实机运行时取证；
