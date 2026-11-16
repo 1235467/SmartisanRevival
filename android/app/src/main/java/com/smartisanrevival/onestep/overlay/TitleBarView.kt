@@ -12,6 +12,7 @@ import android.view.View
 import android.view.ViewConfiguration
 import android.widget.HorizontalScrollView
 import kotlin.math.abs
+import kotlin.math.hypot
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -120,7 +121,7 @@ class TitleBarView(
                 val dx = ev.rawX - downX
                 val dy = ev.rawY - downY
                 val outward = if (railOnRight) dx else -dx
-                if (outward > touchSlop && abs(dx) > abs(dy) * 1.2f) {
+                if (outward > touchSlop && outward > abs(dy) * 0.5f) {
                     dragging = true
                     Log.i("OneStep", "title swipe start dx=$dx dy=$dy")
                     return true
@@ -150,7 +151,7 @@ class TitleBarView(
                     val dx = ev.rawX - downX
                     val dy = ev.rawY - downY
                     val outward = if (railOnRight) dx else -dx
-                    if (outward > touchSlop && abs(dx) > abs(dy) * 1.2f) {
+                    if (outward > touchSlop && outward > abs(dy) * 0.5f) {
                         dragging = true
                         Log.i("OneStep", "title swipe start dx=$dx dy=$dy")
                     }
@@ -160,10 +161,14 @@ class TitleBarView(
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 if (!dragging) return true
-                dragOut = outwardDistance(ev.rawX)
+                val dx = ev.rawX - downX
+                val dy = ev.rawY - downY
+                val outNow = outwardDistance(ev.rawX)
+                val dist = hypot(dx, dy)
+                dragOut = outNow
                 dragging = false
-                if (dragOut >= dismissThreshold) {
-                    Log.i("OneStep", "title swipe dismiss $dragOut")
+                if (outNow > 0f && dist >= dismissThreshold) {
+                    Log.i("OneStep", "title swipe dismiss dist=$dist dx=$dx dy=$dy")
                     onExit()
                 }
                 return true
