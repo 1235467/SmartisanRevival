@@ -114,12 +114,12 @@ class TitleBarView(
                 dragOut = 0f
             }
             MotionEvent.ACTION_MOVE -> {
-                if (!inTitleRow) return false
                 if (dragging) return true
                 val dx = ev.rawX - downX
                 val dy = ev.rawY - downY
                 val outward = if (railOnRight) dx else -dx
-                if (outward > touchSlop) {
+                // 标题行：外划即可；dock 行：必须同时向上，避免和横向滚动抢
+                if (outward > touchSlop && (inTitleRow || dy < -touchSlop)) {
                     dragging = true
                     Log.i("OneStep", "title swipe start dx=$dx dy=$dy")
                     return true
@@ -144,12 +144,12 @@ class TitleBarView(
                 return true
             }
             MotionEvent.ACTION_MOVE -> {
-                if (!inTitleRow) return false
+                if (!inTitleRow && !dragging) return false
                 if (!dragging) {
                     val dx = ev.rawX - downX
                     val dy = ev.rawY - downY
                     val outward = if (railOnRight) dx else -dx
-                    if (outward > touchSlop) {
+                    if (outward > touchSlop && (inTitleRow || dy < -touchSlop)) {
                         dragging = true
                         Log.i("OneStep", "title swipe start dx=$dx dy=$dy")
                     }
