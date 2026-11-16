@@ -14,8 +14,6 @@ import android.view.View
 import android.view.ViewConfiguration
 import android.widget.LinearLayout
 import android.widget.Toast
-import kotlin.math.abs
-import kotlin.math.hypot
 import com.smartisanrevival.onestep.OneStepPrefs
 import com.smartisanrevival.onestep.anim.OneStepAnim
 
@@ -64,7 +62,7 @@ class SideRailView(
                 val dx = ev.rawX - downX
                 val dy = ev.rawY - downY
                 val outward = if (railOnRight) dx else -dx
-                if (outward > touchSlop && outward > abs(dy) * 0.5f) {
+                if (outward > touchSlop) {
                     dragging = true
                     Log.i("OneStep", "rail swipe start dx=$dx dy=$dy")
                     parent?.requestDisallowInterceptTouchEvent(true)
@@ -90,7 +88,7 @@ class SideRailView(
                     val dx = ev.rawX - downX
                     val dy = ev.rawY - downY
                     val outward = if (railOnRight) dx else -dx
-                    if (outward > touchSlop && outward > abs(dy) * 0.5f) {
+                    if (outward > touchSlop) {
                         dragging = true
                         Log.i("OneStep", "rail swipe start dx=$dx dy=$dy")
                         parent?.requestDisallowInterceptTouchEvent(true)
@@ -104,14 +102,11 @@ class SideRailView(
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 if (!dragging) return true
-                val dx = ev.rawX - downX
                 val dy = ev.rawY - downY
-                val outNow = outwardDistance(ev.rawX)
-                val dist = hypot(dx, dy)
-                dragOut = outNow.coerceIn(0f, width.toFloat())
+                dragOut = outwardDistance(ev.rawX).coerceIn(0f, width.toFloat())
                 dragging = false
-                if (outNow > 0f && dist >= dismissThreshold) {
-                    Log.i("OneStep", "rail swipe dismiss dist=$dist dx=$dx dy=$dy")
+                if (dragOut >= dismissThreshold) {
+                    Log.i("OneStep", "rail swipe dismiss out=$dragOut dy=$dy")
                     onSwipeOut()
                 } else {
                     animate().translationX(0f).setDuration(120).start()
