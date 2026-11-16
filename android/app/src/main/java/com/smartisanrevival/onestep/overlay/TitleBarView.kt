@@ -5,9 +5,13 @@ import android.content.Context
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.ColorDrawable
+import android.util.Log
 import android.view.Gravity
+import android.view.MotionEvent
 import android.view.View
+import android.view.ViewConfiguration
 import android.widget.HorizontalScrollView
+import kotlin.math.abs
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -27,6 +31,13 @@ class TitleBarView(
 ) : LinearLayout(context) {
 
     val dockRow: HorizontalScrollView
+    private val touchSlop = ViewConfiguration.get(context).scaledTouchSlop
+    private val dismissThreshold = dp(24).toFloat()
+    private var downX = 0f
+    private var downY = 0f
+    private var dragging = false
+    private var dragOut = 0f
+    private var inTitleRow = false
 
     init {
         orientation = VERTICAL
@@ -93,6 +104,76 @@ class TitleBarView(
 
         addView(dockRow, LayoutParams(LayoutParams.MATCH_PARENT, dp(72)))
     }
+
+    override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
+        when (ev.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                inTitleRow = ev.y <= dp(48)
+                downX = ev.rawX
+                downY = ev.rawY
+                dragging = false
+                dragOut = 0f
+            }
+            MotionEvent.ACTION_MOVE -> {
+                if (!inTitleRow) return false
+                if (dragging) return true
+                val dx = ev.rawX - downX
+                val dy = ev.rawY - downY
+                val outward = if (railOnRight) dx else -dx
+                if (outward > touchSlop && abs(dx) > abs(dy) * 1.2f) {
+                    dragging = true
+                    Log.i("OneStep", "title swipe start dx=$dx dy=$dy")
+                    return true
+                }
+            }
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                if (!dragging) inTitleRow = false
+            }
+        }
+        return false
+    }
+
+    override fun onTouchEvent(ev: MotionEvent): Boolean {
+        when (ev.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                inTitleRow = ev.y <= dp(48)
+                if (!inTitleRow) return false
+                downX = ev.rawX
+                downY = ev.rawY
+                dragging = false
+                dragOut = 0f
+                return true
+            }
+            MotionEvent.ACTION_MOVE -> {
+                if (!inTitleRow) return false
+                if (!dragging) {
+                    val dx = ev.rawX - downX
+                    val dy = ev.rawY - downY
+                    val outward = if (railOnRight) dx else -dx
+                    if (outward > touchSlop && abs(dx) > abs(dy) * 1.2f) {
+                        dragging = true
+                        Log.i("OneStep", "title swipe start dx=$dx dy=$dy")
+                    }
+                }
+                if (dragging) dragOut = outwardDistance(ev.rawX)
+                return true
+            }
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                if (!dragging) return true
+                dragOut = outwardDistance(ev.rawX)
+                dragging = false
+                if (dragOut >= dismissThreshold) {
+                    Log.i("OneStep", "title swipe dismiss $dragOut")
+                    onExit()
+                }
+                return true
+            }
+        }
+        return true
+    }
+
+    private fun outwardDistance(rawX: Float): Float =
+        (if (railOnRight) rawX - downX else downX - rawX).coerceAtLeast(0f)
 
     private fun addDockEntry(parent: LinearLayout, iconRes: Int, label: String, panel: Int) {
         val cell = LinearLayout(context).apply {

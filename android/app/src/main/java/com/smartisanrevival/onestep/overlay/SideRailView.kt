@@ -7,6 +7,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.drawable.ColorDrawable
 import android.net.Uri
+import android.util.Log
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
@@ -64,6 +65,7 @@ class SideRailView(
                 val outward = if (railOnRight) dx else -dx
                 if (outward > touchSlop && abs(dx) > abs(dy) * 1.2f) {
                     dragging = true
+                    Log.i("OneStep", "rail swipe start dx=$dx dy=$dy")
                     parent?.requestDisallowInterceptTouchEvent(true)
                     return true
                 }
@@ -89,6 +91,7 @@ class SideRailView(
                     val outward = if (railOnRight) dx else -dx
                     if (outward > touchSlop && abs(dx) > abs(dy) * 1.2f) {
                         dragging = true
+                        Log.i("OneStep", "rail swipe start dx=$dx dy=$dy")
                         parent?.requestDisallowInterceptTouchEvent(true)
                     }
                 }
@@ -103,6 +106,7 @@ class SideRailView(
                 dragOut = outwardDistance(ev.rawX).coerceIn(0f, width.toFloat())
                 dragging = false
                 if (dragOut >= dismissThreshold) {
+                    Log.i("OneStep", "rail swipe dismiss $dragOut")
                     onSwipeOut()
                 } else {
                     animate().translationX(0f).setDuration(120).start()
