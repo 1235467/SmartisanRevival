@@ -2,10 +2,10 @@
 
 在魅族 21 Pro（Flyme AIOS / Android 16）上 1:1 还原 Smartisan OS 8 的招牌能力。
 当前两条主线都已可用：**大爆炸**（拇指按压炸词）和**一步**（侧栏 + 拇指下拉）。
-不用刷机、不用 root；触发靠 Shizuku 读触摸屏，取字靠无障碍。
+不用刷机、不用 root；触发靠 Shizuku / Sui 读触摸屏，取字靠无障碍。
 
 首个体验版已发 GitHub Release：[`v1.0-thumbpress`](https://github.com/nt-cubic/SmartisanRevival/releases/tag/v1.0-thumbpress)。
-**Shizuku 已内置在 APK 里**，接收人全程不需要联网。
+**Shizuku 已内置在 APK 里**，接收人全程不需要联网；如果设备已有 Sui，直接用 Sui 授权即可，不用装 Shizuku。
 
 目标机：魅族 21 Pro。参考机：坚果 R2（Smartisan OS 8）。
 
@@ -20,6 +20,7 @@
 - 备忘录、QQ、微信消息、系统设置等**能复制的文字**会炸开成词块
 - 底部圆角面板，词块从按压点飞出；原文换行保留；长文分段追加
 - 划选之后：复制、搜索、词典、切开、分享
+- **音效**：设置页「大爆炸音效」可关，默认开
 - **复制**：原版 24 帧开口动画，字吸进去，按钮合回圆钮，面板不关
 - **搜索 / 词典**：独立浮卡「网络搜索结果」，底栏换百度 / 谷歌 / 必应 / 有道等
 - **炸图片 · 框选识别**（复刻 OS 8 炸图片）：按在图片等没有字的区域 → 冻结截屏 + 蓝色框选界面
@@ -45,7 +46,7 @@ APK 在 Release 附件或 `dist/SmartisanRevival-1.0-thumbpress.apk`（43 MB，a
 接收人流程（**全程无需联网**）：
 
 1. 安装 APK
-2. 打开 App 点 **②「安装/授权 Shizuku」**：从内置包弹出系统安装器装 Shizuku；再打开 Shizuku →「通过无线调试启动」→ 配对（一次性）
+2. 打开 App 点 **②「授权 Shizuku / Sui」**：已有 Sui 就直接授权；没有 Shizuku 再点 **②·「安装内置 Shizuku」**，装好后打开 Shizuku →「通过无线调试启动」→ 配对（一次性）
 3. 开无障碍「大爆炸引擎」「一步引擎」；Android 13+ 若提示"受限设置"：应用信息 → 右上角 ⋮ → **允许受限设置**
 4. 按主界面引导校准拇指、钉应用、加磁贴
 
@@ -144,7 +145,7 @@ D:\Dev\Toolchains\gradle\gradle-8.9\bin\gradle.bat assembleRelease --console=pla
 
 ## 真机怎么开（开发机）
 
-1. 装好 Shizuku（现在直接用 App 内 ② 内置包装即可），无线调试激活，对大爆炸点「始终允许」
+1. 装好 Shizuku（或直接用 Sui）；Shizuku 用 App 内 ②· 内置包装即可，无线调试激活，对大爆炸点「始终允许」
 2. 打开无障碍「大爆炸引擎」「一步引擎」
 3. 大爆炸点「②」授权；一步点「⑥ 开启一步」
 4. 用**拇指肚**按住文字约半秒

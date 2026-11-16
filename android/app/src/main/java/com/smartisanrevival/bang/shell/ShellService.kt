@@ -78,7 +78,7 @@ class ShellService() : IShellService.Stub() {
     override fun injectMotion(action: String, x: Int, y: Int) {
         try {
             Runtime.getRuntime().exec(
-                arrayOf("input", "motionevent", action, x.toString(), y.toString())
+                arrayOf("/system/bin/input", "motionevent", action, x.toString(), y.toString())
             ).waitFor()
         } catch (e: Exception) {
             Log.e("BangPress", "inject $action failed", e)

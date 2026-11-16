@@ -8,7 +8,7 @@
 
 ## 触发（v2，已在真机跑通）
 
-锤子原版是 framework 在 `TextView` 长按里直接启动大爆炸。魅族在 Meizu 21 Pro / Flyme（Android 16）上，用 **Shizuku（shell 身份）直读 `/dev/input/event7` 的 evdev 二进制流**：
+锤子原版是 framework 在 `TextView` 长按里直接启动大爆炸。魅族在 Meizu 21 Pro / Flyme（Android 16）上，用 **Shizuku / Sui（shell/root 身份）直读 `/dev/input/event7` 的 evdev 二进制流**：
 
 - 触摸设备：`main_touch`（`/dev/input/event7`），坐标范围 13680×31920（屏幕的 10 倍）
 - **时间**：按住 ≥ 550ms，位移不超过约 40dp
@@ -74,7 +74,7 @@ APK：`android/app/build/outputs/apk/debug/app-debug.apk`（versionName `1.0-thu
 
 **重启后按压失灵是正常的，需要补两步：**
 
-1. **Shizuku 服务端不会自动起。** 打开 Shizuku 应用重新激活（无线调试），或者
+1. **Shizuku 服务端不会自动起。**（用 Sui 的话随 Magisk 模块开机启动，不需要这步）打开 Shizuku 应用重新激活（无线调试），或者
    插着 adb 跑一次：
    ```
    adb shell /data/app/~~kivBzam-e_JkXoxsi59BSA==/moe.shizuku.privileged.api-sv1ErzXxkgGcUHT7MuWJSg==/lib/arm64/libshizuku.so

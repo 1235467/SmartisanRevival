@@ -194,7 +194,7 @@ class PressWatcher(
 
     /** @return false 表示没有触摸设备，不要重试。 */
     private fun runLoop(svc: IShellService): Boolean {
-        val probe = svc.runForOutput(arrayOf("getevent", "-pl"))
+        val probe = svc.runForOutput(arrayOf("/system/bin/getevent", "-pl"))
         val device = parseProbe(probe) ?: run {
             Log.i(TAG, "no touchscreen in getevent -pl")
             return false

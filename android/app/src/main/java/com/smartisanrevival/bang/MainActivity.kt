@@ -42,8 +42,11 @@ class MainActivity : Activity() {
         btn("① 打开无障碍「大爆炸引擎」") {
             startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
         }
-        btn("② 安装/授权 Shizuku（拇指按压必须，内置包）") {
-            if (shizukuInstalled()) enableShizuku() else installShizuku()
+        btn("② 授权 Shizuku / Sui（拇指按压必须）") {
+            enableShizuku()
+        }
+        btn("②· 安装内置 Shizuku（可选，没有 Shizuku/Sui 时）") {
+            if (shizukuInstalled()) toast("Shizuku 已安装；用 Sui 的话直接点②授权") else installShizuku()
         }
         btn("③ 关闭拇指按压") {
             BangPrefs.setPressEnabled(this, false)
@@ -77,6 +80,15 @@ class MainActivity : Activity() {
             LinearLayout.LayoutParams.WRAP_CONTENT
         ))
 
+        box.addView(android.widget.CheckBox(this).apply {
+            text = "大爆炸音效"
+            isChecked = BangPrefs.soundEnabled(this@MainActivity)
+            setPadding(0, pad / 2, 0, pad / 2)
+            setOnCheckedChangeListener { _, checked ->
+                BangPrefs.setSoundEnabled(this@MainActivity, checked)
+            }
+        })
+
         // ===== 一步 OneStep =====
         btn("⑤ 打开无障碍「一步引擎」") {
             startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
@@ -98,10 +110,9 @@ class MainActivity : Activity() {
             if (svc == null) toast("先走⑤打开「一步引擎」")
             else svc.toggleSidebar()
         }
-        btn("⑨ 拇指下拉手势（原版手势，需 Shizuku）") {
-            val ping = try { Shizuku.pingBinder() } catch (_: Exception) { false }
-            if (!ping) {
-                toast("先安装并启动 Shizuku（同大爆炸②用的那个）")
+        btn("⑨ 拇指下拉手势（原版手势，需 Shizuku / Sui）") {
+            if (!shizukuReady()) {
+                toast("先让 Shizuku 或 Sui 就绪（同大爆炸②用的那个）")
             } else {
                 val next = !OneStepPrefs.thumbPullEnabled(this)
                 OneStepPrefs.setThumbPullEnabled(this, next)
@@ -142,8 +153,8 @@ class MainActivity : Activity() {
             text = """
                 大爆炸 v1 · 拇指按压
 
-                1. 点②：从内置安装包装 Shizuku（不用联网、不用 root）
-                   打开 Shizuku →「通过无线调试启动」→ 按提示配对（一次性）
+                1. Shizuku 或 Sui 就绪时点②授权；没有 Shizuku 可点「②· 安装内置 Shizuku」
+                   （内置包不用联网；用 Sui 不需要装 Shizuku）
                 2. 打开无障碍「大爆炸引擎」
                 3. 再点②授权
 
@@ -173,11 +184,17 @@ class MainActivity : Activity() {
         }
         box.addView(oneStepTip)
         setContentView(ScrollView(this).apply { addView(box) })
-        Shizuku.addRequestPermissionResultListener(listener)
+        try {
+            Shizuku.addRequestPermissionResultListener(listener)
+        } catch (_: Exception) {
+        }
     }
 
     override fun onDestroy() {
-        Shizuku.removeRequestPermissionResultListener(listener)
+        try {
+            Shizuku.removeRequestPermissionResultListener(listener)
+        } catch (_: Exception) {
+        }
         super.onDestroy()
     }
 
@@ -191,10 +208,16 @@ class MainActivity : Activity() {
         val enabled = am.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
             .any { it.resolveInfo.serviceInfo.packageName == packageName }
         val connected = BangAccessibilityService.instance != null
-        val shizuku = try { Shizuku.pingBinder() } catch (_: Exception) { false }
+        val shizuku = shizukuReady()
+        val granted = shizukuGranted()
+        val shizukuStatus = when {
+            !shizuku -> "未就绪"
+            granted -> "就绪（已授权）"
+            else -> "就绪（未授权，点②）"
+        }
         status.text = listOf(
             "无障碍: ${if (enabled) "开" else "关"}（服务${if (connected) "已连接" else "未连接"}）",
-            "Shizuku: ${if (shizuku) "就绪" else "未安装/未启动"}",
+            "Shizuku/Sui: $shizukuStatus",
             "拇指按压: ${if (BangPrefs.pressEnabled(this)) "已启用" else "关闭"}" +
                 thumbStatus(),
             "设备: ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL} / Android ${android.os.Build.VERSION.RELEASE}"
@@ -264,15 +287,37 @@ class MainActivity : Activity() {
         ).joinToString("\n")
     }
 
+    private fun shizukuReady(): Boolean = try {
+        Shizuku.pingBinder()
+    } catch (_: Exception) {
+        false
+    }
+
+    private fun shizukuGranted(): Boolean = try {
+        shizukuReady() && Shizuku.checkSelfPermission() == 0
+    } catch (_: Exception) {
+        false
+    }
+
     private fun enableShizuku() {
-        val ping = try { Shizuku.pingBinder() } catch (_: Exception) { false }
-        if (!ping) {
-            toast("Shizuku 已装但未启动：打开 Shizuku 应用 →「通过无线调试启动」，按提示配对")
+        if (!shizukuReady()) {
+            toast(
+                if (shizukuInstalled())
+                    "Shizuku 已安装但未启动：打开 Shizuku →「通过无线调试启动」"
+                else
+                    "没检测到 Shizuku / Sui 服务。用 Sui 请确认模块已启用；要装 Shizuku 点「②· 安装内置 Shizuku」"
+            )
             return
         }
-        val granted = try { Shizuku.checkSelfPermission() == 0 } catch (_: Exception) { false }
-        if (granted) onShizukuGranted()
-        else Shizuku.requestPermission(114)
+        if (shizukuGranted()) {
+            onShizukuGranted()
+            return
+        }
+        try {
+            Shizuku.requestPermission(114)
+        } catch (e: Exception) {
+            toast("拉起授权失败：${e.message}")
+        }
     }
 
     private fun shizukuInstalled(): Boolean = try {
@@ -306,7 +351,7 @@ class MainActivity : Activity() {
     }
 
     private val listener = Shizuku.OnRequestPermissionResultListener { _, grantResult ->
-        if (grantResult == 0) onShizukuGranted() else toast("Shizuku 授权被拒绝")
+        if (grantResult == 0) onShizukuGranted() else toast("Shizuku/Sui 授权被拒绝")
     }
 
     private fun onShizukuGranted() {

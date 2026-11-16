@@ -9,6 +9,7 @@ object BangPrefs {
     const val KEY_SEARCH_DICT = "search_dict"
     const val KEY_SEARCH_WIKI = "search_wiki"
     const val KEY_THUMB_MAJOR = "thumb_major"
+    const val KEY_SOUND = "sound_enabled"
 
     /** 未校准时的门槛。实测 touchpanel 拇指峰值约 14，指尖 5–11。 */
     const val DEFAULT_MIN_MAJOR = 12
@@ -18,6 +19,13 @@ object BangPrefs {
 
     fun setPressEnabled(ctx: Context, v: Boolean) {
         ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE).edit().putBoolean(KEY_PRESS, v).apply()
+    }
+
+    fun soundEnabled(ctx: Context): Boolean =
+        ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE).getBoolean(KEY_SOUND, true)
+
+    fun setSoundEnabled(ctx: Context, v: Boolean) {
+        ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE).edit().putBoolean(KEY_SOUND, v).apply()
     }
 
     fun searchEngine(ctx: Context, key: String, default: String): String =

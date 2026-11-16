@@ -12,6 +12,7 @@ import android.media.AudioAttributes
 import android.media.SoundPool
 import android.os.VibrationEffect
 import android.os.Vibrator
+import android.util.TypedValue
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
@@ -23,6 +24,7 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
+import com.smartisanrevival.bang.BangPrefs
 import com.smartisanrevival.bang.R
 import com.smartisanrevival.bang.model.BangResult
 import com.smartisanrevival.bang.model.Granularity
@@ -49,6 +51,7 @@ class BangPanelView(
         const val ICON_TINT = 0xFF5A5A5A.toInt()
         private const val ROW_STAGGER_MS = 18L
         private const val ROW_STAGGER_CAP_MS = 260L
+        private const val CHIP_TEXT_SP = 15f
 
         // 原版 BoomOcrActivity 的圆圈参数
         private const val TOUCH_SCALE_FROM = 2f
@@ -111,11 +114,13 @@ class BangPanelView(
     private var selected = LinkedHashSet<Int>()
     private var soundId = 0
     private val wordPaint = android.text.TextPaint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
-        textSize = dpF(15)
+        textSize = spF(CHIP_TEXT_SP)
     }
     private val puncPaint = android.text.TextPaint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
-        textSize = dpF(15)
+        textSize = spF(CHIP_TEXT_SP)
     }
+    private val wordPadH: Int = drawablePaddingH(R.drawable.boom_chips_bg_normal)
+    private val puncPadH: Int = drawablePaddingH(R.drawable.boom_chips_punctuate_normal)
     private val soundPool = SoundPool.Builder()
         .setMaxStreams(1)
         .setAudioAttributes(
@@ -415,7 +420,7 @@ class BangPanelView(
     }
 
     private fun playBangSound() {
-        if (soundPlayed || soundId == 0) return
+        if (soundPlayed || soundId == 0 || !BangPrefs.soundEnabled(context)) return
         val stream = soundPool.play(soundId, 0.9f, 0.9f, 1, 0, 1f)
         if (stream != 0) soundPlayed = true
     }
@@ -658,15 +663,17 @@ class BangPanelView(
 
     private fun measureChip(block: WordBlock): Int {
         val paint = if (block.isPunc) puncPaint else wordPaint
-        val base = if (block.isPunc) dp(8) else dp(18)
+        val minPad = if (block.isPunc) dp(8) else dp(18)
+        val bgPad = if (block.isPunc) puncPadH else wordPadH
         val min = if (block.isPunc) dp(21) else dp(33)
-        return maxOf(min, base + kotlin.math.ceil(paint.measureText(block.text)).toInt())
+        val pad = maxOf(minPad, bgPad) + dp(2)
+        return maxOf(min, pad + kotlin.math.ceil(paint.measureText(block.text)).toInt())
     }
 
     private fun makeChip(block: WordBlock): TextView = TextView(context).apply {
         tag = block.id
         text = block.text
-        textSize = 15f
+        textSize = CHIP_TEXT_SP
         setTextColor(if (block.isPunc) 0xFF888888.toInt() else TEXT_DARK)
         gravity = Gravity.CENTER
         maxLines = 1
@@ -954,6 +961,13 @@ class BangPanelView(
     private fun toast(s: String) = Toast.makeText(ctx(), s, Toast.LENGTH_SHORT).show()
     private fun dp(v: Int): Int = (v * resources.displayMetrics.density).toInt()
     private fun dpF(v: Int): Float = v * resources.displayMetrics.density
+    private fun spF(v: Float): Float =
+        TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, v, resources.displayMetrics)
+    private fun drawablePaddingH(res: Int): Int {
+        val d = context.getDrawable(res) ?: return 0
+        val r = android.graphics.Rect()
+        return if (d.getPadding(r)) r.left + r.right else 0
+    }
     private fun vibrate(ms: Long) {
         val v = ctx().getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator ?: return
         v.vibrate(VibrationEffect.createOneShot(ms, VibrationEffect.DEFAULT_AMPLITUDE))

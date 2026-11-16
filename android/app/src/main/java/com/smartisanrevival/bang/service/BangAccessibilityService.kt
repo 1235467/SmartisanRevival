@@ -123,11 +123,11 @@ class BangAccessibilityService : AccessibilityService() {
         if (!ready) {
             if (retryCount < RETRY_MAX) {
                 retryCount++
-                Log.i(TAG, "shizuku not ready, retry $retryCount/$RETRY_MAX in ${RETRY_DELAY_MS}ms")
+                Log.i(TAG, "shizuku/sui not ready, retry $retryCount/$RETRY_MAX in ${RETRY_DELAY_MS}ms")
                 main.removeCallbacksAndMessages(retryToken)
                 main.postDelayed(retryToken, RETRY_DELAY_MS)
             } else {
-                Log.i(TAG, "shizuku still not ready after $RETRY_MAX tries, give up")
+                Log.i(TAG, "shizuku/sui still not ready after $RETRY_MAX tries, give up")
             }
             return
         }
