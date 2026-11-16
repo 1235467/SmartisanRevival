@@ -8,9 +8,12 @@ import android.graphics.Paint
 import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.view.Gravity
+import android.view.MotionEvent
 import android.view.View
+import android.view.ViewConfiguration
 import android.widget.LinearLayout
 import android.widget.Toast
+import kotlin.math.abs
 import com.smartisanrevival.onestep.OneStepPrefs
 import com.smartisanrevival.onestep.anim.OneStepAnim
 
@@ -21,12 +24,19 @@ import com.smartisanrevival.onestep.anim.OneStepAnim
 class SideRailView(
     context: Context,
     private val railOnRight: Boolean,
-    private val currentPackage: () -> String?
+    private val currentPackage: () -> String?,
+    private val onSwipeOut: () -> Unit = {}
 ) : LinearLayout(context) {
 
     private val slotsContainer = LinearLayout(context).apply {
         orientation = VERTICAL
     }
+    private val touchSlop = ViewConfiguration.get(context).scaledTouchSlop
+    private val dismissThreshold = dp(24f)
+    private var downX = 0f
+    private var downY = 0f
+    private var dragging = false
+    private var dragOut = 0f
 
     init {
         orientation = VERTICAL
@@ -34,6 +44,77 @@ class SideRailView(
         addView(slotsContainer, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
         rebuild()
     }
+
+    /**
+     * 开栏状态下向屏幕边缘外划 = 收起。只有水平向外的拖动才拦截，
+     * 单击图标和竖向操作仍然交给子 View。
+     */
+    override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
+        when (ev.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                downX = ev.rawX
+                downY = ev.rawY
+                dragging = false
+                dragOut = 0f
+            }
+            MotionEvent.ACTION_MOVE -> {
+                if (dragging) return true
+                val dx = ev.rawX - downX
+                val dy = ev.rawY - downY
+                val outward = if (railOnRight) dx else -dx
+                if (outward > touchSlop && abs(dx) > abs(dy) * 1.2f) {
+                    dragging = true
+                    parent?.requestDisallowInterceptTouchEvent(true)
+                    return true
+                }
+            }
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> dragging = false
+        }
+        return false
+    }
+
+    override fun onTouchEvent(ev: MotionEvent): Boolean {
+        when (ev.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                downX = ev.rawX
+                downY = ev.rawY
+                dragging = false
+                dragOut = 0f
+                return true
+            }
+            MotionEvent.ACTION_MOVE -> {
+                if (!dragging) {
+                    val dx = ev.rawX - downX
+                    val dy = ev.rawY - downY
+                    val outward = if (railOnRight) dx else -dx
+                    if (outward > touchSlop && abs(dx) > abs(dy) * 1.2f) {
+                        dragging = true
+                        parent?.requestDisallowInterceptTouchEvent(true)
+                    }
+                }
+                if (dragging) {
+                    dragOut = outwardDistance(ev.rawX).coerceIn(0f, width.toFloat())
+                    translationX = if (railOnRight) dragOut else -dragOut
+                }
+                return true
+            }
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                if (!dragging) return true
+                dragOut = outwardDistance(ev.rawX).coerceIn(0f, width.toFloat())
+                dragging = false
+                if (dragOut >= dismissThreshold) {
+                    onSwipeOut()
+                } else {
+                    animate().translationX(0f).setDuration(120).start()
+                }
+                return true
+            }
+        }
+        return true
+    }
+
+    private fun outwardDistance(rawX: Float): Float =
+        if (railOnRight) rawX - downX else downX - rawX
 
     fun rebuild() {
         slotsContainer.removeAllViews()

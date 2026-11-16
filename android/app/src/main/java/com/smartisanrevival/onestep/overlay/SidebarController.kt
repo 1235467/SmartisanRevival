@@ -66,7 +66,7 @@ class SidebarController(private val service: AccessibilityService) {
         val barW = metrics.widthPixels - railW
         val statusBar = statusBarHeight()
 
-        val rail = SideRailView(service, railRight) { svc.foregroundPackage }
+        val rail = SideRailView(service, railRight, { svc.foregroundPackage }, { dismiss() })
         val title = TitleBarView(service, railRight,
             onExit = { dismiss() }, onSettings = { openSettings() },
             onOpenPanel = { showPanel(it) })
