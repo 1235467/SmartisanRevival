@@ -116,13 +116,18 @@ adb install -r android\app\build\outputs\apk\debug\app-debug.apk
 
 重装后 Flyme 会关掉无障碍，要到 **设置 → 辅助功能 → 无障碍 → 大爆炸引擎** 再打开一次。
 
-**发 release 版**（签名密钥在 `android/keystore/bang-release.jks`，别名 `bang`，密码见私档；密钥不随仓库分发）：
+**发 release 版**（密钥不随仓库分发；密码只放环境变量，不要写进任何文件）：
 
 ```bat
+set BANG_KEYSTORE=D:\path\to\your.jks
+set BANG_STORE_PASSWORD=你的store密码
+set BANG_KEY_ALIAS=你的别名
+set BANG_KEY_PASSWORD=你的key密码
 D:\Dev\Toolchains\gradle\gradle-8.9\bin\gradle.bat assembleRelease --console=plain
 ```
 
-APK：`android/app/build/outputs/apk/release/app-release.apk`，发版前复制到 `dist/` 并走 `gh release create`。
+没设 `BANG_KEYSTORE` 时只产出未签名 APK：`android/app/build/outputs/apk/release/app-release-unsigned.apk`；
+设置了则产出 `app-release.apk`。发版前复制到 `dist/` 并走 `gh release create`。
 
 ### Nix（flake，Linux x86_64）
 
@@ -133,7 +138,7 @@ APK：`android/app/build/outputs/apk/release/app-release.apk`，发版前复制�
 ```
 
 脚本自己走 `nix develop`，构建缓存放在仓库下的 `.gradle-home/`、`.android-home/`。
-产物仍是 `android/app/build/outputs/apk/debug/app-debug.apk`。
+默认产物是 `android/app/build/outputs/apk/debug/app-debug.apk`；`GRADLE_TASK=:app:assembleRelease` 可切到 release。
 
 ---
 

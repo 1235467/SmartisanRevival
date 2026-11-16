@@ -20,11 +20,17 @@ mkdir -p "$GRADLE_USER_HOME" "$ANDROID_USER_HOME"
 printf 'sdk.dir=%s\n' "$ANDROID_HOME" > android/local.properties
 
 cd android
-gradle :app:assembleDebug \
+task="${GRADLE_TASK:-:app:assembleDebug}"
+gradle "$task" \
   --no-daemon \
   --console=plain \
   --max-workers="${GRADLE_MAX_WORKERS:-2}" \
   -Pkotlin.compiler.execution.strategy=in-process \
   "$@"
 
-ls -l app/build/outputs/apk/debug/app-debug.apk
+for apk in \
+  app/build/outputs/apk/release/app-release.apk \
+  app/build/outputs/apk/release/app-release-unsigned.apk \
+  app/build/outputs/apk/debug/app-debug.apk; do
+  [[ -f "$apk" ]] && ls -l "$apk"
+done

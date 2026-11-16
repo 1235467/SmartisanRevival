@@ -24,16 +24,21 @@ android {
     }
     signingConfigs {
         create("release") {
-            storeFile = file("../keystore/bang-release.jks")
-            storePassword = "bang-revival-2026"
-            keyAlias = "bang"
-            keyPassword = "bang-revival-2026"
+            val keyStorePath = System.getenv("BANG_KEYSTORE")
+            if (!keyStorePath.isNullOrBlank() && file(keyStorePath).exists()) {
+                storeFile = file(keyStorePath)
+                storePassword = System.getenv("BANG_STORE_PASSWORD")
+                keyAlias = System.getenv("BANG_KEY_ALIAS")
+                keyPassword = System.getenv("BANG_KEY_PASSWORD")
+            }
         }
     }
     buildTypes {
         release {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("release")
+            if (signingConfigs.getByName("release").storeFile != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
     compileOptions {
