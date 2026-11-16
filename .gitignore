@@ -3,6 +3,8 @@ AndroidSdk/
 .marionette/
 .zcode/
 .gradle/
+.gradle-home/
+.android-home/
 .idea/
 *.iml
 local.properties

@@ -124,6 +124,17 @@ D:\Dev\Toolchains\gradle\gradle-8.9\bin\gradle.bat assembleRelease --console=pla
 
 APK：`android/app/build/outputs/apk/release/app-release.apk`，发版前复制到 `dist/` 并走 `gh release create`。
 
+### Nix（flake，Linux x86_64）
+
+无需装 JDK / Gradle / Android SDK，全部由 `flake.nix` 提供（JDK 17 + Gradle 8.14 + SDK 35 / build-tools 35.0.0）：
+
+```bash
+./scripts/build-nix.sh
+```
+
+脚本自己走 `nix develop`，构建缓存放在仓库下的 `.gradle-home/`、`.android-home/`。
+产物仍是 `android/app/build/outputs/apk/debug/app-debug.apk`。
+
 ---
 
 ## 真机怎么开（开发机）
