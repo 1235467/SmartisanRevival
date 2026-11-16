@@ -111,7 +111,7 @@ class ThumbPadView @JvmOverloads constructor(
                 val held = SystemClock.uptimeMillis() - downAt
                 val m = maxOf(peak, svc?.peekMajor() ?: 0)
                 liveMajor = m
-                if (event.actionMasked == MotionEvent.ACTION_UP && held >= 400 && m >= 20) {
+                if (event.actionMasked == MotionEvent.ACTION_UP && held >= 400 && m >= 8) {
                     caption = "已记下你的拇指（$m）"
                     onSaved?.invoke(m)
                 } else {

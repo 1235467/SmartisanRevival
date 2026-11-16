@@ -77,6 +77,7 @@ android/            App（com.smartisanrevival.bang + com.smartisanrevival.onest
                     send（分享收纳）、shell、service
   app/src/debug/    仅调试包含 adb 广播接收器（release 不含）
   keystore/         签名密钥（不进 git，本地备份）
+.github/workflows/  GitHub Actions 打 debug APK（termux 不本地编译）
 dist/               发布产物（不进 git）
 probe/              第 0 期体检 APK 与转储
 docs/               施工文档；CURRENT.md 是当前边界
@@ -92,9 +93,10 @@ references/
 ## 在这台电脑上编译
 
 Gradle 必须在 `android/` 里跑，仓库根目录没有 `settings.gradle`。
+CI 用 GitHub Actions（`.github/workflows/build.yml`）打 debug APK，push 后到 Actions 里下载 artifact；本地不再需要硬编码 JDK 路径。
 
 ```
-JDK    D:\Dev\Toolchains\jdk17
+JDK    D:\Dev\Toolchains\jdk17（设置 JAVA_HOME，或传 -Dorg.gradle.java.home）
 Gradle D:\Dev\Toolchains\gradle\gradle-8.9
 SDK    D:\Dev\SDKs\Android\Sdk（local.properties）
 ADB    D:\Dev\SDKs\Android\Sdk\platform-tools\adb.exe
@@ -102,6 +104,7 @@ ADB    D:\Dev\SDKs\Android\Sdk\platform-tools\adb.exe
 
 ```bat
 cd /d D:\Project\SmartisanRevival\android
+set JAVA_HOME=D:\Dev\Toolchains\jdk17
 D:\Dev\Toolchains\gradle\gradle-8.9\bin\gradle.bat assembleDebug --console=plain
 ```
 
@@ -156,7 +159,7 @@ adb shell am broadcast -a com.smartisanrevival.onestep.DEBUG_TOGGLE
 同时满足才炸：
 
 1. **时间**：按住 ≥ 550ms，中途没滑出约 40dp
-2. **面积**：`ABS_MT_TOUCH_MAJOR` 峰值 ≥ 主界面校准值的 78%（未校准默认 120，满量程 255）。指尖轻点通常 <20，拇指肚会上去
+2. **面积**：`ABS_MT_TOUCH_MAJOR` 峰值 ≥ 主界面校准值的 60%（未校准默认 12，满量程 255）。实测面板拇指约 14，指尖 5–11
 3. **有字**：无障碍树在手指下面能读到可复制的正文；读不到时走截图 OCR 兜底
 
 QQ / 微信把气泡标成敏感节点，服务必须声明为辅助功能工具（`isAccessibilityTool`）才能读到。

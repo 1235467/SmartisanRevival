@@ -10,8 +10,8 @@ object BangPrefs {
     const val KEY_SEARCH_WIKI = "search_wiki"
     const val KEY_THUMB_MAJOR = "thumb_major"
 
-    /** 未校准前偏严，挡指尖。一步同屏 TOUCH_MAJOR 满量 255，轻点常在 40–90。 */
-    const val DEFAULT_MIN_MAJOR = 120
+    /** 未校准时的门槛。实测 touchpanel 拇指峰值约 14，指尖 5–11。 */
+    const val DEFAULT_MIN_MAJOR = 12
 
     fun pressEnabled(ctx: Context): Boolean =
         ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE).getBoolean(KEY_PRESS, false)
@@ -34,10 +34,10 @@ object BangPrefs {
         ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE).edit().putInt(KEY_THUMB_MAJOR, major).apply()
     }
 
-    /** 运行时门槛：校准值的 78%。没校准用偏严的默认。 */
+    /** 运行时门槛：校准值的 60%。不能卡在 48，否则本机拇指永远过不去。 */
     fun minTouchMajor(ctx: Context): Int {
         val thumb = thumbMajor(ctx)
         if (thumb <= 0) return DEFAULT_MIN_MAJOR
-        return (thumb * 0.78f).toInt().coerceIn(48, 240)
+        return (thumb * 0.6f).toInt().coerceIn(8, 240)
     }
 }

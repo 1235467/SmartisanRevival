@@ -276,6 +276,9 @@ class PressWatcher(
         activeSlot = -1
         currentSlot = 0
         scrollRaw = 0
+        slotX.fill(-1)
+        slotY.fill(-1)
+        slotMajor.fill(0)
         gestureId = gestureSeq.incrementAndGet()
         main.removeCallbacksAndMessages(null)
     }
